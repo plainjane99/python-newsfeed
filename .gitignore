@@ -1,0 +1,16 @@
+# files and directories that the official Flask documentation recommends ignoring
+venv/
+.env
+
+*.pyc
+__pycache__/
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
