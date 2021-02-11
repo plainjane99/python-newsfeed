@@ -1,3 +1,5 @@
+# __init__.py file makes the directory it is in a package
+
 from flask import Flask
 # import home module directly from routes package
 from app.routes import home, dashboard
@@ -26,5 +28,5 @@ def create_app(test_config=None):
   # register routes
   app.register_blueprint(home)
   app.register_blueprint(dashboard)
-  
+
   return app
