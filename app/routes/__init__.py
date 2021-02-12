@@ -6,3 +6,6 @@
 from .home import bp as home
 
 from .dashboard import bp as dashboard
+
+# import the blueprint we created
+from .api import bp as api

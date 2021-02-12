@@ -4,8 +4,8 @@ from app.db import init_db
 
 from flask import Flask
 
-# import home module directly from routes package
-from app.routes import home, dashboard
+# import modules directly from routes package
+from app.routes import home, dashboard, api
 
 # import filters for use
 from app.utils import filters
@@ -43,5 +43,9 @@ def create_app(test_config=None):
   app.jinja_env.filters['format_url'] = filters.format_url
   app.jinja_env.filters['format_date'] = filters.format_date
   app.jinja_env.filters['format_plural'] = filters.format_plural
+
+  # register the api blueprint with the api we created so that any routes we create in api will become part of the Flask app
+  # prefix will be /api
+  app.register_blueprint(api)
 
   return app

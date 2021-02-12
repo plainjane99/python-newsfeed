@@ -42,3 +42,11 @@ class User(Base):
     assert len(password) > 4
     # return the encypted password
     return bcrypt.hashpw(password.encode('utf-8'), salt)
+
+  # create a verify_password() method for login
+  # uses the checkpw method to compare the incoming password from login to the saved one on the User object
+  def verify_password(self, password):
+    return bcrypt.checkpw(
+      password.encode('utf-8'),
+      self.password.encode('utf-8')
+    )

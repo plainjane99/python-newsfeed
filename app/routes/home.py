@@ -1,10 +1,12 @@
 # this file is a "module"
 
 # import the Blueprint and render_template functions from flask 
-# Blueprint() lets us consolidate routes onto a single bp object
+## Blueprint() lets us consolidate routes onto a single bp object
 ##### This corresponds to using the Router middleware of Express.js
-# render_template allows us to return a template (similar to handlebars)
-from flask import Blueprint, render_template
+## render_template allows us to return a template (similar to handlebars)
+## session allows us to keep track of whether user is logged in
+## redirect will redirect to a different path
+from flask import Blueprint, render_template, session, redirect
 
 # import Post model
 from app.models import Post
@@ -26,16 +28,22 @@ def index():
   posts = db.query(Post).order_by(Post.created_at.desc()).all()
   # return a template rather than the string homepage.html
   # with posts data
+  # pass in the loggedIn session
   return render_template(
     'homepage.html',
-    posts=posts
+    posts=posts,
+    loggedIn=session.get('loggedIn')
 )
 
 # add a @bp.route() decorator before the function to turn it into a route
 @bp.route('/login')
 def login():
-  # return a template rather than the string login.html
-  return render_template('login.html')
+  # not logged in yet
+  if session.get('loggedIn') is None:
+    # return a template rather than the string login.html
+    return render_template('login.html')
+  # if logged in
+  return redirect('/dashboard')
 
 # add a @bp.route() decorator before the function to turn it into a route
 # use a parameter, represented by <id>
@@ -54,5 +62,6 @@ def single(id):
   # (defined by init_db(app) function in app/db/__init__.py)
   return render_template(
     'single-post.html',
-    post=post
+    post=post,
+    loggedIn=session.get('loggedIn')
   )
