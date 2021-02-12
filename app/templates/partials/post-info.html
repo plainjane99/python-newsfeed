@@ -1,11 +1,22 @@
+<!-- this is a jinja template -->
 <article class="post">
   <div class="title">
     <a href="{{post.post_url}}" target="_blank">{{post.title}}</a>
-    <span>({{post.post_url}})</span>
+    <!-- utilize our format_url filter -->
+    <!-- passes post.post_url as the argument to the format_url() function -->
+    <span>({{post.post_url|format_url}})</span>
   </div>
   <div class="meta">
-    {{post.vote_count}} point(s) by {{post.user.username}} on {{post.created_at}}
+    <!-- utilize our format_plural filter -->
+    <!-- uses post.vote_count as 'amount' argument into the format_plural function -->
+    <!-- also takes in 'point' as the word to pluralize -->
+    <!-- utilize our format_date filter -->
+    <!-- passes post.created_at as the argument to the format_date() function -->
+    {{post.vote_count}} {{post.vote_count|format_plural('point')}} by {{post.user.username}} on {{post.created_at|format_date}}
     |
-    <a href="/post/{{post.id}}">{{post.comments|length}} comment(s)</a>
+    <!-- utilize our format_plural filter -->
+    <!-- uses post.comments|length (how jinja prints length of an array) as 'amount' argument into the format_plural function -->
+    <!-- also takes in 'comment' as the word to pluralize -->
+    <a href="/post/{{post.id}}">{{post.comments|length}} {{post.comments|length|format_plural('comment')}}</a>
   </div>
 </article>

@@ -1,8 +1,14 @@
 # __init__.py file makes the directory it is in a package
+# import the Flask-MySQL connection function we created
+from app.db import init_db
 
 from flask import Flask
+
 # import home module directly from routes package
 from app.routes import home, dashboard
+
+# import filters for use
+from app.utils import filters
 
 # this creates a basic flask server
 # def = define
@@ -28,5 +34,14 @@ def create_app(test_config=None):
   # register routes
   app.register_blueprint(home)
   app.register_blueprint(dashboard)
+
+  # create the connection with the database once the flask app is ready
+  # pass in app variable we created 
+  init_db(app)
+
+  # register the filters we created
+  app.jinja_env.filters['format_url'] = filters.format_url
+  app.jinja_env.filters['format_date'] = filters.format_date
+  app.jinja_env.filters['format_plural'] = filters.format_plural
 
   return app
