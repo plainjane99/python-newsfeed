@@ -6,7 +6,7 @@
 # session is similar to express-session npm package where we can have the app keep track of user's logged-in status
 from flask import Blueprint, request, jsonify, session
 
-from app.models import User
+from app.models import User, Post, Comment, Vote
 
 # bring in the function for use
 from app.db import get_db
@@ -14,10 +14,19 @@ from app.db import get_db
 # sys module allows us to see error messages
 import sys
 
+# import the auth decorator
+from app.utils.auth import login_required
+
 # create the api blueprint
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 # add routes we need
+
+## use decorator functions
+## for function below:
+## signup() is 'decorated' by @bp.route function
+## the @ character signifies that the function should be treated as a decorator
+## signup() function passed into route() function to be called at a later time
 
 ## this route resolves to /api/users and is a POST route
 @bp.route('/users', methods=['POST'])
@@ -47,6 +56,7 @@ def signup():
     # save in database
     ## prep the INSERT statement
     db.add(newUser)
+    # perform the INSERT against the database
     ## update the database
     db.commit()
 
@@ -117,3 +127,149 @@ def login():
 
   # return JSON notation of the user's id
   return jsonify(id = user.id)
+
+## this route resolves to /comments and is a POST route
+@bp.route('/comments', methods=['POST'])
+# add auth decorator
+@login_required
+def comment():
+  # capture the posted data by using the get_json() method
+  data = request.get_json()
+  db = get_db()
+
+  # use try/except in case creation of comment fails
+  try:
+    # create a new comment
+    newComment = Comment(
+      # comment_text and post_id come from user
+      # user_id is stored by session
+      comment_text = data['comment_text'],
+      post_id = data['post_id'],
+      user_id = session.get('user_id')
+    )
+
+    # save in database
+    ## prep the INSERT statement
+    db.add(newComment)
+    # perform the INSERT against the database
+    db.commit()
+
+  except:
+    print(sys.exc_info()[0])
+
+    # discard the pending commit if the INSERT fails
+    db.rollback()
+    # return a message
+    return jsonify(message = 'Comment failed'), 500
+
+  # if the commit is successful, return the the newly created comment ID
+  return jsonify(id = newComment.id)
+
+## upvote creates a new record in the votes table but the Post model uses the information
+@bp.route('/posts/upvote', methods=['PUT'])
+# add auth decorator
+@login_required
+def upvote():
+  # capture the button click by using the get_json() method
+  data = request.get_json()
+  db = get_db()
+
+  # use try/except in case creation of upvote data fails
+  try:
+    # create a new vote with incoming id and session id
+    newVote = Vote(
+      post_id = data['post_id'],
+      user_id = session.get('user_id')
+    )
+
+    # save in database
+    ## prep the INSERT statement
+    db.add(newVote)
+    # perform the INSERT against the database
+    db.commit()
+
+  except:
+    print(sys.exc_info()[0])
+
+    # discard the pending commit if the INSERT fails
+    db.rollback()
+    # return a message
+    return jsonify(message = 'Upvote failed'), 500
+
+  # if the commit is successful, return 
+  return '', 204
+
+# route to create a new post
+@bp.route('/posts', methods=['POST'])
+# add auth decorator
+@login_required
+def create():
+  data = request.get_json()
+  db = get_db()
+
+  try:
+    # create a new post
+    newPost = Post(
+      title = data['title'],
+      post_url = data['post_url'],
+      user_id = session.get('user_id')
+    )
+
+    db.add(newPost)
+    db.commit()
+  except:
+    print(sys.exc_info()[0])
+
+    db.rollback()
+    return jsonify(message = 'Post failed'), 500
+
+  return jsonify(id = newPost.id)
+
+# update the details of a post
+# use an <id> route parameter and capture the parameter in the update() function
+@bp.route('/posts/<id>', methods=['PUT'])
+# add auth decorator
+@login_required
+# use <id> route parameter in the update() function
+def update(id):
+  data = request.get_json()
+  db = get_db()
+
+  try:
+    # SQLAlchemy requires query of the database for the corresponding record
+    post = db.query(Post).filter(Post.id == id).one()
+    # then update the record like you'd update a normal dictionary
+    post.title = data['title']
+    # then recommit it
+    db.commit()
+
+  except:
+    print(sys.exc_info()[0])
+
+    db.rollback()
+    return jsonify(message = 'Post not found'), 404
+  
+  return '', 204
+
+# delete a post
+# use an <id> route parameter 
+@bp.route('/posts/<id>', methods=['DELETE'])
+# add auth decorator
+@login_required
+# pass the <id> parameter into the delete function
+def delete(id):
+  db = get_db()
+
+  try:
+    # SQLAlchemy requires query of the database for the corresponding record
+    # then pass the data to db.delete to delete post from db
+    db.delete(db.query(Post).filter(Post.id == id).one())
+    # commit the change
+    db.commit()
+  except:
+    print(sys.exc_info()[0])
+
+    db.rollback()
+    return jsonify(message = 'Post not found'), 404
+
+  return '', 204
